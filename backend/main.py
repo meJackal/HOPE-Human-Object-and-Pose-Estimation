@@ -76,9 +76,9 @@ def init_camera(source=0):
             camera = cv2.VideoCapture(source, backend)
             if camera.isOpened():
                 logger.info(f"Camera opened successfully with backend {backend}")
-                # Lower resolution for faster processing
-                camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-                camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                # Use lower resolution for faster capture and processing
+                camera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+                camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
                 camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize buffer lag
                 camera.set(cv2.CAP_PROP_FPS, 30)
                 # Test read
@@ -206,7 +206,8 @@ async def websocket_pose(ws: WebSocket):
     
     try:
         frame_count = 0
-        inference_skip = 2  # Run inference every N frames (higher = faster FPS but less frequent detection)
+        inference_skip = 4  # Run inference every N frames (higher = faster FPS but less frequent detection)
+        send_skip = 1  # Send every N frames (reduces network overhead)
         last_persons = []  # Cache last detection results
         
         while True:
@@ -226,8 +227,8 @@ async def websocket_pose(ws: WebSocket):
                 # Run inference only every N frames for better FPS
                 persons = last_persons
                 if frame_count % inference_skip == 0:
-                    # Run YOLOv8-Pose inference with optimizations
-                    results = model(frame, verbose=False, imgsz=256, half=False, device='cuda' if torch.cuda.is_available() else 'cpu')
+                    # Run YOLOv8-Pose inference with aggressive optimizations for speed
+                    results = model(frame, verbose=False, imgsz=192, half=False, device='cuda' if torch.cuda.is_available() else 'cpu')
                 
                     # Extract pose data with confidence filtering
                     persons = []
@@ -278,9 +279,17 @@ async def websocket_pose(ws: WebSocket):
                     
                     last_persons = persons  # Cache results for skipped frames
                 
-                # Encode frame as JPEG with lower quality for speed (50 = good balance)
-                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 50]
-                _, buffer = cv2.imencode('.jpg', frame, encode_param)
+                # Skip sending some frames to reduce network overhead
+                if frame_count % send_skip != 0:
+                    await asyncio.sleep(0)
+                    continue
+                
+                # No need to downscale since we're already capturing at 320x240
+                display_frame = frame
+                
+                # Encode frame as JPEG with low quality for speed
+                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 40]
+                _, buffer = cv2.imencode('.jpg', display_frame, encode_param)
                 frame_b64 = base64.b64encode(buffer).decode('utf-8')
                 
                 # Determine overall detection message
@@ -298,8 +307,8 @@ async def websocket_pose(ws: WebSocket):
                             detection_message = f"Low chance - {low_conf_count} possible human(s) in area"
                 
                 payload = {
-                    "width": frame.shape[1],
-                    "height": frame.shape[0],
+                    "width": display_frame.shape[1],
+                    "height": display_frame.shape[0],
                     "persons": persons,
                     "frame": frame_b64,
                     "detection_message": detection_message
