@@ -275,6 +275,8 @@
       let fpsInterval = null;
       let lastLogTime = 0;
       let lastDetectionCount = 0;
+      let pendingFrame = null;  // Buffer for next frame to render
+      let isRendering = false;  // Prevent multiple simultaneous renders
 
       function showError(message) {
         errorDisplay.textContent = message;
@@ -349,6 +351,25 @@
       resizeCanvas();
 
       function drawFrame(data) {
+        // Store the frame data for rendering
+        pendingFrame = data;
+        
+        // Request animation frame for smooth rendering
+        if (!isRendering) {
+          isRendering = true;
+          requestAnimationFrame(renderFrame);
+        }
+      }
+      
+      function renderFrame() {
+        if (!pendingFrame) {
+          isRendering = false;
+          return;
+        }
+        
+        const data = pendingFrame;
+        pendingFrame = null;
+        
         if (data.frame) {
           // Draw camera frame
           const img = new Image();
@@ -424,8 +445,16 @@
             }
             
             frameCount++;
+            isRendering = false;
+            
+            // If there's another pending frame, render it immediately
+            if (pendingFrame) {
+              requestAnimationFrame(renderFrame);
+            }
           };
           img.src = 'data:image/jpeg;base64,' + data.frame;
+        } else {
+          isRendering = false;
         }
         
         if (data.persons) {
@@ -466,9 +495,7 @@
       }
 
       function connect() {
-        const wsProto = (location.protocol === 'https:') ? 'wss://' : 'ws://';
-        const url = wsProto + location.host + '/ws';
-        ws = new WebSocket(url);
+        const ws = new WebSocket('ws://192.168.1.7:8000/ws'); 
         
         ws.onopen = () => {
           connStatus.classList.add('connected');

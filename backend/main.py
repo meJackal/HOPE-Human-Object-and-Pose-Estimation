@@ -76,10 +76,11 @@ def init_camera(source=0):
             camera = cv2.VideoCapture(source, backend)
             if camera.isOpened():
                 logger.info(f"Camera opened successfully with backend {backend}")
-                camera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
-                camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
-                camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                camera.set(cv2.CAP_PROP_FPS, 60)
+                # Lower resolution for faster processing
+                camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize buffer lag
+                camera.set(cv2.CAP_PROP_FPS, 30)
                 # Test read
                 ret, test_frame = camera.read()
                 if ret:
@@ -205,6 +206,9 @@ async def websocket_pose(ws: WebSocket):
     
     try:
         frame_count = 0
+        inference_skip = 2  # Run inference every N frames (higher = faster FPS but less frequent detection)
+        last_persons = []  # Cache last detection results
+        
         while True:
             if is_running and cap.isOpened():
                 ret, frame = cap.read()
@@ -219,58 +223,63 @@ async def websocket_pose(ws: WebSocket):
                 if frame_count == 1:
                     logger.info(f"First frame captured: {frame.shape}")
                 
-                # Run YOLOv8-Pose inference with optimizations
-                results = model(frame, verbose=False, imgsz=320, half=False, device='cuda' if torch.cuda.is_available() else 'cpu')
+                # Run inference only every N frames for better FPS
+                persons = last_persons
+                if frame_count % inference_skip == 0:
+                    # Run YOLOv8-Pose inference with optimizations
+                    results = model(frame, verbose=False, imgsz=256, half=False, device='cuda' if torch.cuda.is_available() else 'cpu')
                 
-                # Extract pose data with confidence filtering
-                persons = []
-                BBOX_CONF_THRESHOLD = 0.25  # Minimum confidence for person detection
-                KEYPOINT_CONF_THRESHOLD = 0.3  # Minimum confidence for keypoint visibility
-                
-                if len(results) > 0 and results[0].keypoints is not None:
-                    keypoints_data = results[0].keypoints
-                    boxes_data = results[0].boxes
+                    # Extract pose data with confidence filtering
+                    persons = []
+                    BBOX_CONF_THRESHOLD = 0.25  # Minimum confidence for person detection
+                    KEYPOINT_CONF_THRESHOLD = 0.3  # Minimum confidence for keypoint visibility
                     
-                    for i in range(len(keypoints_data)):
-                        # Get bounding box confidence first
-                        bbox = boxes_data[i].xyxy.cpu().numpy()[0]  # [x1, y1, x2, y2]
-                        bbox_conf = float(boxes_data[i].conf.cpu().numpy()[0])
+                    if len(results) > 0 and results[0].keypoints is not None:
+                        keypoints_data = results[0].keypoints
+                        boxes_data = results[0].boxes
                         
-                        # Skip detections with very low confidence
-                        if bbox_conf < BBOX_CONF_THRESHOLD:
-                            continue
+                        for i in range(len(keypoints_data)):
+                            # Get bounding box confidence first
+                            bbox = boxes_data[i].xyxy.cpu().numpy()[0]  # [x1, y1, x2, y2]
+                            bbox_conf = float(boxes_data[i].conf.cpu().numpy()[0])
                         
-                        kp = keypoints_data[i].xy.cpu().numpy()[0]  # Shape: (17, 2)
-                        conf = keypoints_data[i].conf.cpu().numpy()[0]  # Shape: (17,)
+                            # Skip detections with very low confidence
+                            if bbox_conf < BBOX_CONF_THRESHOLD:
+                                continue
+                            
+                            kp = keypoints_data[i].xy.cpu().numpy()[0]  # Shape: (17, 2)
+                            conf = keypoints_data[i].conf.cpu().numpy()[0]  # Shape: (17,)
                         
-                        # Format: [x, y, confidence] for each of 17 keypoints
-                        # Only include keypoints with confidence above threshold
-                        keypoints = []
-                        for j in range(len(kp)):
-                            kp_conf = float(conf[j])
-                            # Include keypoint data but mark low confidence ones
-                            if kp_conf >= KEYPOINT_CONF_THRESHOLD:
-                                keypoints.append([float(kp[j][0]), float(kp[j][1]), kp_conf])
+                            # Format: [x, y, confidence] for each of 17 keypoints
+                            # Only include keypoints with confidence above threshold
+                            keypoints = []
+                            for j in range(len(kp)):
+                                kp_conf = float(conf[j])
+                                # Include keypoint data but mark low confidence ones
+                                if kp_conf >= KEYPOINT_CONF_THRESHOLD:
+                                    keypoints.append([float(kp[j][0]), float(kp[j][1]), kp_conf])
+                                else:
+                                    # Set coordinates to 0 for low-confidence keypoints
+                                    keypoints.append([0.0, 0.0, kp_conf])
+                        
+                            # Determine confidence level message
+                            if bbox_conf >= 0.5:
+                                confidence_message = "High chance - Human detected"
                             else:
-                                # Set coordinates to 0 for low-confidence keypoints
-                                keypoints.append([0.0, 0.0, kp_conf])
-                        
-                        # Determine confidence level message
-                        if bbox_conf >= 0.5:
-                            confidence_message = "High chance - Human detected"
-                        else:
-                            confidence_message = "Low chance - Possible human in area"
-                        
-                        persons.append({
-                            "id": i,
-                            "keypoints": keypoints,
-                            "bbox": [float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])],
-                            "bbox_conf": bbox_conf,
-                            "confidence_message": confidence_message
-                        })
+                                confidence_message = "Low chance - Possible human in area"
+                            
+                            persons.append({
+                                "id": i,
+                                "keypoints": keypoints,
+                                "bbox": [float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])],
+                                "bbox_conf": bbox_conf,
+                                "confidence_message": confidence_message
+                            })
+                    
+                    last_persons = persons  # Cache results for skipped frames
                 
-                # Encode frame as JPEG with lower quality for speed
-                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+                # Encode frame as JPEG with lower quality for speed (50 = good balance)
+                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 50]
                 _, buffer = cv2.imencode('.jpg', frame, encode_param)
                 frame_b64 = base64.b64encode(buffer).decode('utf-8')
                 
@@ -297,8 +306,8 @@ async def websocket_pose(ws: WebSocket):
                 }
                 
                 await ws.send_text(json.dumps(payload))
-                # Minimal sleep for higher FPS
-                await asyncio.sleep(0.001)
+                # No sleep - let it run as fast as possible
+                await asyncio.sleep(0)
             else:
                 # Send idle status
                 await ws.send_text(json.dumps({"idle": True, "is_running": is_running}))
