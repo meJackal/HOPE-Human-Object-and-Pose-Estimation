@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>YOLOv8-Pose Detection System</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+        height: 100vh;
+        display: flex;
+        background: #1a1a1a;
+        color: #fff;
+      }
+      
+      #left-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #000;
+        position: relative;
+      }
+      
+      #canvas-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      
+      canvas {
+        max-width: 100%;
+        max-height: 100%;
+        display: block;
+      }
+      
+      #right-panel {
+        width: 320px;
+        background: #2a2a2a;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        overflow-y: auto;
+      }
+      
+      .panel-section {
+        background: #333;
+        border-radius: 8px;
+        padding: 16px;
+      }
+      
+      h2 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #00d4ff;
+      }
+      
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #666;
+      }
+      
+      .status-dot.connected { background: #00ff88; }
+      .status-dot.running { background: #00d4ff; }
+      .status-dot.stopped { background: #ff4444; }
+      
+      button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      
+      button.start {
+        background: #00ff88;
+        color: #000;
+      }
+      
+      button.start:hover { background: #00cc6e; }
+      
+      button.stop {
+        background: #ff4444;
+        color: #fff;
+      }
+      
+      button.stop:hover { background: #cc0000; }
+      
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      
+      .metric {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #444;
+      }
+      
+      .metric:last-child { border-bottom: none; }
+      
+      .metric-label {
+        color: #999;
+        font-size: 13px;
+      }
+      
+      .metric-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #00d4ff;
+      }
+      
+      #fps-display {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0,0,0,0.7);
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-family: monospace;
+      }
+      
+      #error-display {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(255, 68, 68, 0.9);
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 80%;
+        text-align: center;
+        display: none;
+      }
+      
+      #error-display.show {
+        display: block;
+      }
+      
+      .person-item {
+        background: #222;
+        border-radius: 4px;
+        padding: 10px;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .person-item .person-id {
+        font-weight: 600;
+        color: #00d4ff;
+      }
+      
+      .person-item .person-conf {
+        color: #00ff88;
+        font-weight: 700;
+        font-size: 16px;
+      }
+      
+      .log-item {
+        background: #222;
+        border-radius: 4px;
+        padding: 8px;
+        margin-bottom: 6px;
+        border-left: 3px solid #00d4ff;
+      }
+      
+      .log-time {
+        color: #00d4ff;
+        font-weight: 600;
+        font-size: 11px;
+      }
+      
+      .log-detail {
+        color: #999;
+        font-size: 11px;
+        margin-top: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="left-panel">
+      <div id="canvas-container">
+        <canvas id="cv"></canvas>
+        <div id="fps-display">FPS: --</div>
+        <div id="error-display"></div>
+      </div>
+    </div>
+    
+    <div id="right-panel">
+      <div class="panel-section">
+        <h2>System Status</h2>
+        <div class="status-indicator">
+          <div class="status-dot" id="conn-status"></div>
+          <span id="conn-text">Disconnected</span>
+        </div>
+        <div class="status-indicator">
+          <div class="status-dot" id="run-status"></div>
+          <span id="run-text">Stopped</span>
+        </div>
+      </div>
+      
+      <div class="panel-section">
+        <h2>Controls</h2>
+        <button class="start" id="start-btn" onclick="startDetection()">Start Detection</button>
+        <button class="stop" id="stop-btn" onclick="stopDetection()" style="margin-top:10px" disabled>Stop Detection</button>
+      </div>
+      
+      <div class="panel-section">
+        <h2>Detection Stats</h2>
+        <div class="metric">
+          <span class="metric-label">Detected Humans</span>
+          <span class="metric-value" id="human-count">0</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Frame Rate</span>
+          <span class="metric-value" id="fps-value">0</span>
+        </div>
+      </div>
+      
+      <div class="panel-section">
+        <h2>Detected Persons</h2>
+        <div id="persons-list" style="max-height: 300px; overflow-y: auto;">
+          <div style="color: #666; font-size: 13px; text-align: center; padding: 20px;">No detections</div>
+        </div>
+      </div>
+      
+      <div class="panel-section">
+        <h2>Detection Logs</h2>
+        <div id="logs-list" style="max-height: 200px; overflow-y: auto; font-size: 12px;">
+          <div style="color: #666; text-align: center; padding: 10px;">No logs yet</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById('cv');
+      const ctx = canvas.getContext('2d');
+      const connStatus = document.getElementById('conn-status');
+      const connText = document.getElementById('conn-text');
+      const runStatus = document.getElementById('run-status');
+      const runText = document.getElementById('run-text');
+      const humanCount = document.getElementById('human-count');
+      const fpsValue = document.getElementById('fps-value');
+      const fpsDisplay = document.getElementById('fps-display');
+      const startBtn = document.getElementById('start-btn');
+      const stopBtn = document.getElementById('stop-btn');
+      const errorDisplay = document.getElementById('error-display');
+      const personsList = document.getElementById('persons-list');
+      const logsList = document.getElementById('logs-list');
+      
+      let ws = null;
+      let isRunning = false;
+      let lastFrameTime = Date.now();
+      let frameCount = 0;
+      let fpsInterval = null;
+      let lastLogTime = 0;
+      let lastDetectionCount = 0;
+
+      function showError(message) {
+        errorDisplay.textContent = message;
+        errorDisplay.classList.add('show');
+        console.error('Error:', message);
+      }
+      
+      function hideError() {
+        errorDisplay.classList.remove('show');
+      }
+      
+      async function logDetection(count, persons) {
+        try {
+          await fetch('/log_detection', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              count: count,
+              persons: persons.map(p => ({ confidence: p.bbox_conf }))
+            })
+          });
+          await loadLogs();
+        } catch (e) {
+          console.error('Failed to log detection:', e);
+        }
+      }
+      
+      async function loadLogs() {
+        try {
+          const res = await fetch('/logs?limit=10');
+          const data = await res.json();
+          if (data.logs && data.logs.length > 0) {
+            let logsHTML = '';
+            data.logs.forEach(log => {
+              const date = new Date(log.timestamp);
+              const timeStr = date.toLocaleTimeString();
+              const dateStr = date.toLocaleDateString();
+              logsHTML += `
+                <div class="log-item">
+                  <div class="log-time">${timeStr}</div>
+                  <div class="log-detail">${dateStr} - ${log.count} human${log.count !== 1 ? 's' : ''} detected</div>
+                </div>
+              `;
+            });
+            logsList.innerHTML = logsHTML;
+          }
+        } catch (e) {
+          console.error('Failed to load logs:', e);
+        }
+      }
+
+      // COCO pose skeleton connections (17 keypoints)
+      // 0:nose, 1:left_eye, 2:right_eye, 3:left_ear, 4:right_ear
+      // 5:left_shoulder, 6:right_shoulder, 7:left_elbow, 8:right_elbow
+      // 9:left_wrist, 10:right_wrist, 11:left_hip, 12:right_hip
+      // 13:left_knee, 14:right_knee, 15:left_ankle, 16:right_ankle
+      const skeleton = [
+        [0,1],[0,2],[1,3],[2,4],         // Head
+        [0,5],[0,6],[5,6],                // Shoulders
+        [5,7],[7,9],[6,8],[8,10],         // Arms
+        [5,11],[6,12],[11,12],            // Torso
+        [11,13],[13,15],[12,14],[14,16]   // Legs
+      ];
+
+      function resizeCanvas() {
+        const container = document.getElementById('canvas-container');
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+      }
+      
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+
+      function drawFrame(data) {
+        if (data.frame) {
+          // Draw camera frame
+          const img = new Image();
+          img.onload = () => {
+            const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+            const x = (canvas.width - img.width * scale) / 2;
+            const y = (canvas.height - img.height * scale) / 2;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Flip horizontally
+            ctx.save();
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(img, canvas.width - x - img.width * scale, y, img.width * scale, img.height * scale);
+            ctx.restore();
+            
+            // Draw pose overlays
+            if (data.persons && data.persons.length > 0) {
+              ctx.save();
+              ctx.translate(x, y);
+              ctx.scale(scale, scale);
+              
+              for (const person of data.persons) {
+                const kps = person.keypoints;
+                
+                // Draw bounding box
+                if (person.bbox) {
+                  const [x1, y1, x2, y2] = person.bbox;
+                  const conf = person.bbox_conf || 1.0;
+                  // Flip bbox coordinates
+                  const flippedX1 = img.width - x2;
+                  const flippedX2 = img.width - x1;
+                  ctx.strokeStyle = `rgba(0, 255, 136, ${conf})`;
+                  ctx.lineWidth = 3 / scale;
+                  ctx.strokeRect(flippedX1, y1, flippedX2 - flippedX1, y2 - y1);
+                  
+                  // Draw confidence label
+                  ctx.fillStyle = `rgba(0, 255, 136, ${conf})`;
+                  ctx.font = `${16 / scale}px Arial`;
+                  ctx.fillText(`Person ${(conf * 100).toFixed(0)}%`, flippedX1, y1 - 5 / scale);
+                }
+                
+                // Draw skeleton with flipped coordinates
+                ctx.strokeStyle = 'rgba(0, 212, 255, 0.8)';
+                ctx.lineWidth = 3 / scale;
+                ctx.beginPath();
+                for (const [a, b] of skeleton) {
+                  // Check both confidence and valid coordinates (not at origin)
+                  if (kps[a] && kps[b] && 
+                      kps[a][2] > 0.3 && kps[b][2] > 0.3 &&
+                      kps[a][0] > 1 && kps[a][1] > 1 &&
+                      kps[b][0] > 1 && kps[b][1] > 1) {
+                    ctx.moveTo(img.width - kps[a][0], kps[a][1]);
+                    ctx.lineTo(img.width - kps[b][0], kps[b][1]);
+                  }
+                }
+                ctx.stroke();
+                
+                // Draw keypoints with flipped coordinates
+                for (const kp of kps) {
+                  // Only draw keypoints with good confidence and valid coordinates
+                  if (kp[2] > 0.3 && kp[0] > 1 && kp[1] > 1) {
+                    ctx.fillStyle = `rgba(255, 200, 0, ${Math.min(kp[2] * 1.5, 1.0)})`;
+                    ctx.beginPath();
+                    ctx.arc(img.width - kp[0], kp[1], 6 / scale, 0, Math.PI * 2);
+                    ctx.fill();
+                  }
+                }
+              }
+              
+              ctx.restore();
+            }
+            
+            frameCount++;
+          };
+          img.src = 'data:image/jpeg;base64,' + data.frame;
+        }
+        
+        if (data.persons) {
+          humanCount.textContent = data.persons.length;
+          
+          // Log detection every 5 seconds when humans are detected
+          const now = Date.now();
+          if (data.persons.length > 0 && (now - lastLogTime > 5000 || data.persons.length !== lastDetectionCount)) {
+            lastLogTime = now;
+            lastDetectionCount = data.persons.length;
+            logDetection(data.persons.length, data.persons);
+          }
+          
+          // Update persons list
+          if (data.persons.length > 0) {
+            let listHTML = '';
+            data.persons.forEach((person, idx) => {
+              const conf = person.bbox_conf || 0;
+              listHTML += `
+                <div class="person-item">
+                  <span class="person-id">Person ${idx + 1}</span>
+                  <span class="person-conf">${(conf * 100).toFixed(1)}%</span>
+                </div>
+              `;
+            });
+            personsList.innerHTML = listHTML;
+          } else {
+            personsList.innerHTML = '<div style="color: #666; font-size: 13px; text-align: center; padding: 20px;">No detections</div>';
+          }
+        }
+      }
+
+      function updateFPS() {
+        const fps = frameCount;
+        fpsValue.textContent = fps;
+        fpsDisplay.textContent = `FPS: ${fps}`;
+        frameCount = 0;
+      }
+
+      function connect() {
+        const wsProto = (location.protocol === 'https:') ? 'wss://' : 'ws://';
+        const url = wsProto + location.host + '/ws';
+        ws = new WebSocket(url);
+        
+        ws.onopen = () => {
+          connStatus.classList.add('connected');
+          connText.textContent = 'Connected';
+          fpsInterval = setInterval(updateFPS, 1000);
+          loadLogs();
+        };
+        
+        ws.onclose = () => {
+          connStatus.classList.remove('connected');
+          connText.textContent = 'Disconnected';
+          if (fpsInterval) clearInterval(fpsInterval);
+          setTimeout(connect, 2000);
+        };
+        
+        ws.onerror = () => {
+          ws.close();
+        };
+        
+        ws.onmessage = (ev) => {
+          try {
+            const data = JSON.parse(ev.data);
+            if (data.error) {
+              showError(data.error);
+            } else if (data.idle) {
+              // System is idle
+              hideError();
+            } else {
+              hideError();
+              drawFrame(data);
+            }
+          } catch (e) {
+            console.error('Parse error:', e);
+            showError('Failed to parse server data');
+          }
+        };
+      }
+
+      async function startDetection() {
+        try {
+          const res = await fetch('/start', { method: 'POST' });
+          const data = await res.json();
+          if (data.is_running) {
+            isRunning = true;
+            runStatus.classList.add('running');
+            runStatus.classList.remove('stopped');
+            runText.textContent = 'Running';
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+          }
+        } catch (e) {
+          console.error('Start failed:', e);
+        }
+      }
+
+      async function stopDetection() {
+        try {
+          const res = await fetch('/stop', { method: 'POST' });
+          const data = await res.json();
+          if (!data.is_running) {
+            isRunning = false;
+            runStatus.classList.remove('running');
+            runStatus.classList.add('stopped');
+            runText.textContent = 'Stopped';
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            humanCount.textContent = '0';
+            personsList.innerHTML = '<div style="color: #666; font-size: 13px; text-align: center; padding: 20px;">No detections</div>';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }
+        } catch (e) {
+          console.error('Stop failed:', e);
+        }
+      }
+
+      connect();
+    </script>
+  </body>
+</html>
