@@ -275,6 +275,8 @@
       let fpsInterval = null;
       let lastLogTime = 0;
       let lastDetectionCount = 0;
+      let stableDetectionCount = 0;
+      let stableCountFrames = 0;
       let pendingFrame = null;  // Buffer for next frame to render
       let isRendering = false;  // Prevent multiple simultaneous renders
       
@@ -468,12 +470,54 @@
         if (data.persons) {
           humanCount.textContent = data.persons.length;
           
-          // Log detection every 5 seconds when humans are detected
+          // Smart logging: Only log when there's a meaningful change
           const now = Date.now();
-          if (data.persons.length > 0 && (now - lastLogTime > 5000 || data.persons.length !== lastDetectionCount)) {
+          const currentCount = data.persons.length;
+          
+          // Track stable detection count (count that persists for multiple frames)
+          if (currentCount === stableDetectionCount) {
+            stableCountFrames++;
+          } else {
+            stableDetectionCount = currentCount;
+            stableCountFrames = 1;
+          }
+          
+          // Log when:
+          // 1. Humans first appear (0 -> N) and count is stable for 3+ frames
+          // 2. Count changes significantly (more than ±1) and stable for 5+ frames
+          // 3. 30+ seconds passed since last log (periodic update)
+          // NOTE: We don't log when count goes to 0 (no humans detected)
+          let shouldLog = false;
+          
+          // Only consider logging if there are humans detected
+          if (currentCount > 0) {
+            if (stableCountFrames >= 3) {
+              // Humans first detected
+              if (lastDetectionCount === 0) {
+                shouldLog = true;
+              }
+            }
+            
+            if (stableCountFrames >= 5) {
+              // Significant count change (more than 1 person difference)
+              if (Math.abs(currentCount - lastDetectionCount) > 1) {
+                shouldLog = true;
+              }
+            }
+            
+            // Periodic logging every 30 seconds if people still present
+            if (now - lastLogTime > 30000) {
+              shouldLog = true;
+            }
+          }
+          
+          if (shouldLog) {
             lastLogTime = now;
-            lastDetectionCount = data.persons.length;
-            logDetection(data.persons.length, data.persons);
+            lastDetectionCount = currentCount;
+            logDetection(currentCount, data.persons);
+          } else if (currentCount === 0 && lastDetectionCount > 0) {
+            // Update lastDetectionCount when humans disappear, but don't log
+            lastDetectionCount = 0;
           }
           
           // Update persons list

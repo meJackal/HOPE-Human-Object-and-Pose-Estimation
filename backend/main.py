@@ -138,8 +138,16 @@ async def stop_detection():
 async def log_detection(data: dict):
     """Log human detection with timestamp"""
     try:
-        # Read existing logs
-        logs = json.loads(LOGS_FILE.read_text()) if LOGS_FILE.exists() else []
+        # Read existing logs - handle empty or corrupted files
+        logs = []
+        if LOGS_FILE.exists():
+            try:
+                content = LOGS_FILE.read_text().strip()
+                if content:  # Only parse if not empty
+                    logs = json.loads(content)
+            except json.JSONDecodeError as je:
+                logger.warning(f"Corrupted log file, resetting: {je}")
+                logs = []
         
         # Calculate confidence-based counts
         persons = data.get("persons", [])
@@ -175,7 +183,7 @@ async def log_detection(data: dict):
         
         return JSONResponse({"status": "logged", "entry": log_entry})
     except Exception as e:
-        logger.error(f"Failed to log detection: {e}")
+        logger.error(f"Failed to log detection: {e}", exc_info=True)
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
 
@@ -183,7 +191,15 @@ async def log_detection(data: dict):
 async def get_logs(limit: int = 10):
     """Get recent detection logs"""
     try:
-        logs = json.loads(LOGS_FILE.read_text()) if LOGS_FILE.exists() else []
+        logs = []
+        if LOGS_FILE.exists():
+            try:
+                content = LOGS_FILE.read_text().strip()
+                if content:  # Only parse if not empty
+                    logs = json.loads(content)
+            except json.JSONDecodeError:
+                logger.warning("Corrupted log file, returning empty logs")
+                logs = []
         return JSONResponse({"logs": logs[-limit:][::-1]})  # Most recent first
     except Exception as e:
         logger.error(f"Failed to read logs: {e}")
@@ -212,7 +228,7 @@ async def websocket_pose(ws: WebSocket):
     
     try:
         frame_count = 0
-        inference_skip = 4  # Run inference every N frames (higher = faster FPS but less frequent detection)
+        inference_skip = 15  # Run inference every N frames (higher = faster FPS but less frequent detection)
         send_skip = 1  # Send every N frames (reduces network overhead)
         last_persons = []  # Cache last detection results
         
@@ -234,11 +250,21 @@ async def websocket_pose(ws: WebSocket):
                 persons = last_persons
                 if frame_count % inference_skip == 0:
                     # Run YOLOv8-Pose inference with aggressive optimizations for speed
-                    results = model(frame, verbose=False, imgsz=192, half=False, device='cuda' if torch.cuda.is_available() else 'cpu')
+                    # Higher iou threshold (0.7) to better merge duplicate detections of same person
+                    results = model(
+                        frame, 
+                        verbose=False, 
+                        imgsz=192, 
+                        half=False, 
+                        device='cuda' if torch.cuda.is_available() else 'cpu',
+                        conf=0.35,      # Minimum confidence threshold
+                        iou=0.7,        # Higher IoU for better NMS (removes duplicate detections)
+                        max_det=5       # Limit max detections
+                    )
                 
                     # Extract pose data with confidence filtering
                     persons = []
-                    BBOX_CONF_THRESHOLD = 0.25  # Minimum confidence for person detection
+                    BBOX_CONF_THRESHOLD = 0.35  # Minimum confidence for person detection (increased from 0.25)
                     KEYPOINT_CONF_THRESHOLD = 0.3  # Minimum confidence for keypoint visibility
                     
                     if len(results) > 0 and results[0].keypoints is not None:

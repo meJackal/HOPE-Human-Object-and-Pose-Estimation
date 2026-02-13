@@ -1,0 +1,53 @@
+[
+  {
+    "timestamp": "2026-02-13T17:10:35.607451",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.4896261394023895
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-02-13T17:11:09.129226",
+    "count": 2,
+    "high_confidence_count": 0,
+    "low_confidence_count": 2,
+    "detection_message": "Low chance - 2 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.5576320886611938
+      },
+      {
+        "confidence": 0.40729036927223206
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-02-13T17:11:44.047950",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.6322230100631714
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-02-13T17:12:14.288973",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.4261353313922882
+      }
+    ]
+  }
+]
