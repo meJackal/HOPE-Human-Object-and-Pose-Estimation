@@ -100,8 +100,14 @@ def init_camera(source=0):
 
 @app.get("/")
 async def root():
-    index_path = FRONTEND_DIR / "index.html"
-    return FileResponse(str(index_path))
+    home_path = FRONTEND_DIR / "home.html"
+    return FileResponse(str(home_path))
+
+
+@app.get("/detection")
+async def detection():
+    detection_path = FRONTEND_DIR / "detection.html"
+    return FileResponse(str(detection_path))
 
 
 @app.get("/status")

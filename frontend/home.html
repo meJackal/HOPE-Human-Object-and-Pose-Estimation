@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>YOLOv8-Pose Detection System - Home</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+        color: #fff;
+        padding: 20px;
+      }
+      
+      .container {
+        max-width: 800px;
+        text-align: center;
+        animation: fadeIn 0.8s ease-in;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      h1 {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      
+      .subtitle {
+        font-size: 20px;
+        color: #999;
+        margin-bottom: 40px;
+        line-height: 1.6;
+      }
+      
+      .status-card {
+        background: #2a2a2a;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 1px solid #333;
+      }
+      
+      .status-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 15px;
+        margin: 10px 0;
+        background: #1a1a1a;
+        border-radius: 8px;
+      }
+      
+      .status-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #666;
+      }
+      
+      .status-dot.active { 
+        background: #00ff88;
+        box-shadow: 0 0 10px #00ff88;
+        animation: pulse 2s infinite;
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      
+      .status-text {
+        font-size: 16px;
+        color: #ccc;
+      }
+      
+      .status-text.active {
+        color: #00ff88;
+        font-weight: 600;
+      }
+      
+      .btn-container {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      
+      button {
+        padding: 18px 40px;
+        border: none;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-block;
+      }
+      
+      .btn-primary {
+        background: linear-gradient(135deg, #00d4ff 0%, #0088ff 100%);
+        color: #fff;
+      }
+      
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 212, 255, 0.3);
+      }
+      
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+      
+      .btn-secondary {
+        background: #333;
+        color: #fff;
+        border: 2px solid #00d4ff;
+      }
+      
+      .btn-secondary:hover {
+        background: #00d4ff;
+        color: #000;
+      }
+      
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 40px;
+      }
+      
+      .info-card {
+        background: #2a2a2a;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #333;
+      }
+      
+      .info-icon {
+        font-size: 32px;
+        margin-bottom: 10px;
+      }
+      
+      .info-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #00d4ff;
+        margin-bottom: 8px;
+      }
+      
+      .info-desc {
+        font-size: 14px;
+        color: #999;
+        line-height: 1.4;
+      }
+      
+      .loader {
+        border: 3px solid #333;
+        border-top: 3px solid #00ff88;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 10px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>YOLOv8 Pose Detection System</h1>
+      <p class="subtitle">
+        Real-time human pose detection and tracking powered by advanced AI
+      </p>
+      
+      <div class="status-card">
+        <h2 style="margin-bottom: 20px; color: #00d4ff;">Raspberry Pi Connection</h2>
+        
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: #999; font-size: 14px;">
+            Raspberry Pi Address:
+          </label>
+          <input 
+            type="text" 
+            id="pi-ip" 
+            placeholder="raspberrypi.local or 192.168.1.100" 
+            style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #444; background: #1a1a1a; color: #fff; font-size: 16px;"
+            value="raspberrypi.local"
+          />
+          <p style="font-size: 12px; color: #666; margin-top: 8px;">
+            💡 Tip: Use <strong>raspberrypi.local</strong> (hostname) so IP changes don't matter!
+          </p>
+          <button 
+            onclick="connectToPi()" 
+            style="width: 100%; margin-top: 10px; padding: 12px; background: #00d4ff; color: #000; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;"
+          >
+            Connect to Raspberry Pi
+          </button>
+        </div>
+        
+        <div class="status-item">
+          <div class="status-dot" id="server-status"></div>
+          <span class="status-text" id="server-text">Not connected</span>
+          <div class="loader" id="server-loader" style="display: none;"></div>
+        </div>
+        <div class="status-item">
+          <div class="status-dot" id="model-status"></div>
+          <span class="status-text" id="model-text">Waiting for connection...</span>
+        </div>
+        <div class="status-item">
+          <div class="status-dot" id="camera-status"></div>
+          <span class="status-text" id="camera-text">Waiting for connection...</span>
+        </div>
+      </div>
+      
+      <div class="btn-container">
+        <button class="btn-primary" id="start-btn" onclick="goToDetection()" disabled>
+          Start Detection System
+        </button>
+        <button class="btn-secondary" onclick="checkStatus()">
+          Refresh Status
+        </button>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-icon">🎯</div>
+          <div class="info-title">Real-time Detection</div>
+          <div class="info-desc">Detect and track multiple persons simultaneously</div>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">🦴</div>
+          <div class="info-title">Pose Estimation</div>
+          <div class="info-desc">17 keypoint skeleton tracking with confidence scores</div>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">📊</div>
+          <div class="info-title">Live Analytics</div>
+          <div class="info-desc">View detection stats and logs in real-time</div>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">⚡</div>
+          <div class="info-title">High Performance</div>
+          <div class="info-desc">Optimized for Raspberry Pi embedded systems</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let systemReady = false;
+      let piIpAddress = 'localhost';
+
+      // Load saved IP address from localStorage
+      window.onload = function() {
+        const savedIp = localStorage.getItem('piIpAddress');
+        if (savedIp) {
+          document.getElementById('pi-ip').value = savedIp;
+          piIpAddress = savedIp;
+        } else {
+          // Default to raspberrypi.local
+          document.getElementById('pi-ip').value = 'raspberrypi.local';
+        }
+        
+        // Auto-check if IP is set and not localhost
+        if (savedIp && savedIp !== 'localhost') {
+          connectToPi();
+        }
+      };
+
+      async function connectToPi() {
+        const ipInput = document.getElementById('pi-ip').value.trim();
+        
+        if (!ipInput) {
+          alert('Please enter the Raspberry Pi IP address');
+          return;
+        }
+        
+        piIpAddress = ipInput;
+        localStorage.setItem('piIpAddress', piIpAddress);
+        
+        // Reset status
+        document.getElementById('server-status').classList.remove('active');
+        document.getElementById('model-status').classList.remove('active');
+        document.getElementById('camera-status').classList.remove('active');
+        document.getElementById('server-text').textContent = 'Connecting...';
+        document.getElementById('server-text').classList.remove('active');
+        document.getElementById('model-text').textContent = 'Waiting...';
+        document.getElementById('model-text').classList.remove('active');
+        document.getElementById('camera-text').textContent = 'Waiting...';
+        document.getElementById('camera-text').classList.remove('active');
+        document.getElementById('server-loader').style.display = 'inline-block';
+        document.getElementById('start-btn').disabled = true;
+        
+        await checkStatus();
+      }
+
+      async function checkStatus() {
+        try {
+          const serverUrl = piIpAddress === 'localhost' 
+            ? 'http://localhost:8000' 
+            : `http://${piIpAddress}:8000`;
+          
+          const response = await fetch(`${serverUrl}/status`);
+          const data = await response.json();
+          
+          // Update server status
+          const serverStatus = document.getElementById('server-status');
+          const serverText = document.getElementById('server-text');
+          serverStatus.classList.add('active');
+          serverText.classList.add('active');
+          serverText.textContent = `Connected to ${piIpAddress} ✓`;
+          
+          // Update model status
+          const modelStatus = document.getElementById('model-status');
+          const modelText = document.getElementById('model-text');
+          if (data.model_loaded) {
+            modelStatus.classList.add('active');
+            modelText.classList.add('active');
+            modelText.textContent = 'Model Loaded ✓';
+          } else {
+            modelStatus.classList.remove('active');
+            modelText.classList.remove('active');
+            modelText.textContent = 'Model Not Loaded';
+          }
+          
+          // Update camera status
+          const cameraStatus = document.getElementById('camera-status');
+          const cameraText = document.getElementById('camera-text');
+          if (data.camera_open) {
+            cameraStatus.classList.add('active');
+            cameraText.classList.add('active');
+            cameraText.textContent = 'Camera Ready ✓';
+          } else {
+            cameraStatus.classList.remove('active');
+            cameraText.classList.remove('active');
+            cameraText.textContent = 'Camera Not Ready';
+          }
+          
+          // Enable start button if system is ready
+          systemReady = data.status === 'ok';
+          document.getElementById('start-btn').disabled = !systemReady;
+          
+          document.getElementById('server-loader').style.display = 'none';
+          
+        } catch (error) {
+          console.error('Failed to check status:', error);
+          
+          const serverStatus = document.getElementById('server-status');
+          const serverText = document.getElementById('server-text');
+          serverStatus.classList.remove('active');
+          serverText.classList.remove('active');
+          serverText.textContent = `Cannot connect to ${piIpAddress} ✗`;
+          
+          document.getElementById('model-status').classList.remove('active');
+          document.getElementById('model-text').textContent = 'Unknown';
+          document.getElementById('model-text').classList.remove('active');
+          
+          document.getElementById('camera-status').classList.remove('active');
+          document.getElementById('camera-text').textContent = 'Unknown';
+          document.getElementById('camera-text').classList.remove('active');
+          
+          document.getElementById('server-loader').style.display = 'none';
+          document.getElementById('start-btn').disabled = true;
+        }
+      }
+
+      function goToDetection() {
+        if (systemReady) {
+          // Store the IP for the detection page
+          localStorage.setItem('piIpAddress', piIpAddress);
+          
+          const detectionUrl = piIpAddress === 'localhost' 
+            ? '/detection' 
+            : `http://${piIpAddress}:8000/detection`;
+            
+          window.location.href = detectionUrl;
+        }
+      }
+    </script>
+  </body>
+</html>

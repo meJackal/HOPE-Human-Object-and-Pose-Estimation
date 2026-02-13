@@ -1,0 +1,19 @@
+[Unit]
+Description=YOLOv8 Pose Detection System
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/Capstone/backend
+ExecStart=/bin/bash /home/pi/Capstone/backend/start_server.sh
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/pi/Capstone/logs/service.log
+StandardError=append:/home/pi/Capstone/logs/service_error.log
+
+# Environment variables (optional)
+Environment="PYTHONUNBUFFERED=1"
+
+[Install]
+WantedBy=multi-user.target
