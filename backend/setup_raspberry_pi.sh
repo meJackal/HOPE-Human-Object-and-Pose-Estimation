@@ -22,7 +22,7 @@ echo ""
 
 # Step 2: Update service file paths
 echo "[2/5] Updating service file with correct paths..."
-sed -i "s|/home/pi/Capstone|$PROJECT_DIR|g" "$SCRIPT_DIR/yolov8-detection.service"
+sed -i "s|/home/julius/Documents/Humman-Detection|$PROJECT_DIR|g" "$SCRIPT_DIR/yolov8-detection.service"
 echo "✓ Done"
 echo ""
 
