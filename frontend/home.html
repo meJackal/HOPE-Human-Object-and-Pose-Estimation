@@ -6,91 +6,264 @@
     <title>YOLOv8-Pose Detection System - Home</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
+      
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-        height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', Arial, sans-serif;
+        min-height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
         color: #fff;
-        padding: 20px;
+        padding: 40px 20px;
+        position: relative;
+        overflow-x: hidden;
+      }
+      
+      body::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: backgroundMove 60s linear infinite;
+        pointer-events: none;
+      }
+      
+      @keyframes backgroundMove {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(50px, 50px); }
       }
       
       .container {
-        max-width: 800px;
+        max-width: 900px;
         text-align: center;
         animation: fadeIn 0.8s ease-in;
+        position: relative;
+        z-index: 1;
       }
       
       @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
+        from { opacity: 0; transform: translateY(30px); }
         to { opacity: 1; transform: translateY(0); }
       }
       
       h1 {
-        font-size: 48px;
-        font-weight: 700;
+        font-size: 56px;
+        font-weight: 900;
         margin-bottom: 20px;
         background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
+        letter-spacing: -1px;
+        text-shadow: 0 0 40px rgba(0, 212, 255, 0.3);
+        animation: titleGlow 3s ease-in-out infinite;
+      }
+      
+      @keyframes titleGlow {
+        0%, 100% { filter: brightness(1); }
+        50% { filter: brightness(1.2); }
       }
       
       .subtitle {
         font-size: 20px;
-        color: #999;
-        margin-bottom: 40px;
+        color: #aaa;
+        margin-bottom: 50px;
         line-height: 1.6;
+        font-weight: 400;
       }
       
       .status-card {
-        background: #2a2a2a;
-        border-radius: 12px;
-        padding: 30px;
-        margin-bottom: 30px;
-        border: 1px solid #333;
+        background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 212, 255, 0.15);
+        border-radius: 16px;
+        padding: 35px;
+        margin-bottom: 35px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+      }
+      
+      .status-card:hover {
+        border-color: rgba(0, 212, 255, 0.3);
+        box-shadow: 0 12px 48px rgba(0, 212, 255, 0.15);
+      }
+      
+      .status-card h2 {
+        margin-bottom: 25px;
+        color: #00d4ff;
+        font-size: 20px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      
+      .input-wrapper {
+        margin-bottom: 25px;
+      }
+      
+      .input-wrapper label {
+        display: block;
+        margin-bottom: 10px;
+        color: #aaa;
+        font-size: 14px;
+        font-weight: 600;
+        text-align: left;
+      }
+      
+      .input-wrapper input {
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 8px;
+        border: 2px solid rgba(0, 212, 255, 0.2);
+        background: rgba(0, 0, 0, 0.4);
+        color: #fff;
+        font-size: 16px;
+        font-family: inherit;
+        transition: all 0.3s ease;
+      }
+      
+      .input-wrapper input:focus {
+        outline: none;
+        border-color: #00d4ff;
+        background: rgba(0, 0, 0, 0.6);
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+      }
+      
+      .input-wrapper input::placeholder {
+        color: #666;
+      }
+      
+      .input-tip {
+        font-size: 12px;
+        color: #888;
+        margin-top: 10px;
+        text-align: left;
+        padding: 8px 12px;
+        background: rgba(0, 212, 255, 0.05);
+        border-left: 3px solid #00d4ff;
+        border-radius: 4px;
+      }
+      
+      .input-tip strong {
+        color: #00d4ff;
+      }
+      
+      .connect-button {
+        width: 100%;
+        margin-top: 12px;
+        padding: 14px;
+        background: linear-gradient(135deg, #00d4ff 0%, #0088ff 100%);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .connect-button::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+      }
+      
+      .connect-button:hover::before {
+        width: 300px;
+        height: 300px;
+      }
+      
+      .connect-button:hover {
+        box-shadow: 0 8px 24px rgba(0, 212, 255, 0.4);
+        transform: translateY(-2px);
+      }
+      
+      .connect-button:active {
+        transform: translateY(0);
       }
       
       .status-item {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 12px;
-        padding: 15px;
-        margin: 10px 0;
-        background: #1a1a1a;
-        border-radius: 8px;
+        gap: 14px;
+        padding: 16px 20px;
+        margin: 12px 0;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+      }
+      
+      .status-item:hover {
+        background: rgba(0, 0, 0, 0.4);
+        border-color: rgba(0, 212, 255, 0.2);
       }
       
       .status-dot {
-        width: 12px;
-        height: 12px;
+        width: 14px;
+        height: 14px;
         border-radius: 50%;
-        background: #666;
+        background: #444;
+        position: relative;
+        transition: all 0.3s ease;
+      }
+      
+      .status-dot::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
       }
       
       .status-dot.active { 
         background: #00ff88;
-        box-shadow: 0 0 10px #00ff88;
+        box-shadow: 0 0 16px rgba(0, 255, 136, 0.6);
+      }
+      
+      .status-dot.active::after {
+        background: radial-gradient(circle, rgba(0, 255, 136, 0.4) 0%, transparent 70%);
+        opacity: 1;
         animation: pulse 2s infinite;
       }
       
       @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
       }
       
       .status-text {
         font-size: 16px;
         color: #ccc;
+        font-weight: 500;
       }
       
       .status-text.active {
         color: #00ff88;
-        font-weight: 600;
+        font-weight: 700;
       }
       
       .btn-container {
@@ -101,78 +274,147 @@
       }
       
       button {
-        padding: 18px 40px;
+        padding: 18px 42px;
         border: none;
-        border-radius: 8px;
-        font-size: 18px;
-        font-weight: 600;
+        border-radius: 10px;
+        font-size: 17px;
+        font-weight: 700;
         cursor: pointer;
-        transition: all 0.3s;
+        transition: all 0.3s ease;
         text-decoration: none;
         display: inline-block;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      button span {
+        position: relative;
+        z-index: 1;
       }
       
       .btn-primary {
         background: linear-gradient(135deg, #00d4ff 0%, #0088ff 100%);
         color: #fff;
+        box-shadow: 0 6px 20px rgba(0, 212, 255, 0.3);
+      }
+      
+      .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+      }
+      
+      .btn-primary:hover::before {
+        width: 300px;
+        height: 300px;
       }
       
       .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(0, 212, 255, 0.3);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0, 212, 255, 0.5);
+      }
+      
+      .btn-primary:active {
+        transform: translateY(-1px);
       }
       
       .btn-primary:disabled {
-        opacity: 0.5;
+        opacity: 0.4;
         cursor: not-allowed;
         transform: none;
+        box-shadow: none;
+      }
+      
+      .btn-primary:disabled:hover {
+        transform: none;
+        box-shadow: none;
       }
       
       .btn-secondary {
-        background: #333;
-        color: #fff;
+        background: rgba(0, 0, 0, 0.3);
+        color: #00d4ff;
         border: 2px solid #00d4ff;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      }
+      
+      .btn-secondary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #00d4ff;
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+        z-index: 0;
+      }
+      
+      .btn-secondary:hover::before {
+        transform: scaleX(1);
       }
       
       .btn-secondary:hover {
-        background: #00d4ff;
         color: #000;
+        border-color: #00d4ff;
+        box-shadow: 0 6px 24px rgba(0, 212, 255, 0.4);
       }
       
       .info-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 20px;
-        margin-top: 40px;
+        margin-top: 50px;
       }
       
       .info-card {
-        background: #2a2a2a;
-        padding: 20px;
-        border-radius: 8px;
-        border: 1px solid #333;
+        background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+        backdrop-filter: blur(10px);
+        padding: 28px 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        transition: all 0.3s ease;
+      }
+      
+      .info-card:hover {
+        border-color: rgba(0, 212, 255, 0.3);
+        transform: translateY(-5px);
+        box-shadow: 0 12px 32px rgba(0, 212, 255, 0.15);
       }
       
       .info-icon {
-        font-size: 32px;
-        margin-bottom: 10px;
+        font-size: 40px;
+        margin-bottom: 14px;
+        filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.3));
       }
       
       .info-title {
         font-size: 16px;
-        font-weight: 600;
+        font-weight: 700;
         color: #00d4ff;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
       
       .info-desc {
         font-size: 14px;
-        color: #999;
-        line-height: 1.4;
+        color: #aaa;
+        line-height: 1.5;
       }
       
       .loader {
-        border: 3px solid #333;
+        border: 3px solid rgba(0, 255, 136, 0.2);
         border-top: 3px solid #00ff88;
         border-radius: 50%;
         width: 20px;
@@ -196,27 +438,23 @@
       </p>
       
       <div class="status-card">
-        <h2 style="margin-bottom: 20px; color: #00d4ff;">Raspberry Pi Connection</h2>
+        <h2>Raspberry Pi Connection</h2>
         
-        <div style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: #999; font-size: 14px;">
+        <div class="input-wrapper">
+          <label>
             Raspberry Pi Address:
           </label>
           <input 
             type="text" 
             id="pi-ip" 
             placeholder="raspberrypi.local or 192.168.1.100" 
-            style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #444; background: #1a1a1a; color: #fff; font-size: 16px;"
             value="raspberrypi.local"
           />
-          <p style="font-size: 12px; color: #666; margin-top: 8px;">
+          <p class="input-tip">
             💡 Tip: Use <strong>raspberrypi.local</strong> (hostname) so IP changes don't matter!
           </p>
-          <button 
-            onclick="connectToPi()" 
-            style="width: 100%; margin-top: 10px; padding: 12px; background: #00d4ff; color: #000; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;"
-          >
-            Connect to Raspberry Pi
+          <button class="connect-button" onclick="connectToPi()">
+            <span>Connect to Raspberry Pi</span>
           </button>
         </div>
         
@@ -237,36 +475,12 @@
       
       <div class="btn-container">
         <button class="btn-primary" id="start-btn" onclick="goToDetection()" disabled>
-          Start Detection System
+          <span>Start Detection System</span>
         </button>
         <button class="btn-secondary" onclick="checkStatus()">
-          Refresh Status
+          <span>Refresh Status</span>
         </button>
       </div>
-      
-      <div class="info-grid">
-        <div class="info-card">
-          <div class="info-icon">🎯</div>
-          <div class="info-title">Real-time Detection</div>
-          <div class="info-desc">Detect and track multiple persons simultaneously</div>
-        </div>
-        <div class="info-card">
-          <div class="info-icon">🦴</div>
-          <div class="info-title">Pose Estimation</div>
-          <div class="info-desc">17 keypoint skeleton tracking with confidence scores</div>
-        </div>
-        <div class="info-card">
-          <div class="info-icon">📊</div>
-          <div class="info-title">Live Analytics</div>
-          <div class="info-desc">View detection stats and logs in real-time</div>
-        </div>
-        <div class="info-card">
-          <div class="info-icon">⚡</div>
-          <div class="info-title">High Performance</div>
-          <div class="info-desc">Optimized for Raspberry Pi embedded systems</div>
-        </div>
-      </div>
-    </div>
 
     <script>
       let systemReady = false;

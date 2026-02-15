@@ -6,20 +6,23 @@
     <title>YOLOv8-Pose Detection System</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
+      
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', Arial, sans-serif;
         height: 100vh;
         display: flex;
-        background: #1a1a1a;
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
         color: #fff;
+        overflow: hidden;
       }
       
       #left-panel {
         flex: 1;
         display: flex;
         flex-direction: column;
-        background: #000;
+        background: linear-gradient(180deg, #000000 0%, #0f0f1e 100%);
         position: relative;
+        border-right: 1px solid rgba(0, 212, 255, 0.1);
       }
       
       #canvas-container {
@@ -28,114 +31,267 @@
         align-items: center;
         justify-content: center;
         position: relative;
+        padding: 20px;
       }
       
       canvas {
-        max-width: 60%;
-        max-height: 60%;
+        max-width: 95%;
+        max-height: 95%;
         display: block;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 212, 255, 0.15);
+        border: 1px solid rgba(0, 212, 255, 0.2);
       }
       
       #right-panel {
-        width: 320px;
-        background: #2a2a2a;
-        padding: 20px;
+        width: 360px;
+        background: linear-gradient(180deg, #16213e 0%, #0f1419 100%);
+        padding: 24px;
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 16px;
         overflow-y: auto;
+        box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
+      }
+      
+      #right-panel::-webkit-scrollbar {
+        width: 8px;
+      }
+      
+      #right-panel::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+      }
+      
+      #right-panel::-webkit-scrollbar-thumb {
+        background: rgba(0, 212, 255, 0.3);
+        border-radius: 4px;
+      }
+      
+      #right-panel::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 212, 255, 0.5);
       }
       
       .panel-section {
-        background: #333;
-        border-radius: 8px;
-        padding: 16px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 18px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+      }
+      
+      .panel-section:hover {
+        border-color: rgba(0, 212, 255, 0.3);
+        box-shadow: 0 4px 16px rgba(0, 212, 255, 0.1);
       }
       
       h2 {
-        font-size: 16px;
-        font-weight: 600;
-        margin-bottom: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 14px;
         color: #00d4ff;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      h2::before {
+        content: '';
+        width: 3px;
+        height: 16px;
+        background: linear-gradient(180deg, #00d4ff 0%, #00ff88 100%);
+        border-radius: 2px;
       }
       
       .status-indicator {
         display: flex;
         align-items: center;
-        gap: 8px;
-        margin-bottom: 8px;
+        gap: 12px;
+        margin-bottom: 10px;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+      
+      .status-indicator:last-child {
+        margin-bottom: 0;
       }
       
       .status-dot {
-        width: 10px;
-        height: 10px;
+        width: 12px;
+        height: 12px;
         border-radius: 50%;
-        background: #666;
+        background: #444;
+        position: relative;
+        transition: all 0.3s ease;
       }
       
-      .status-dot.connected { background: #00ff88; }
-      .status-dot.running { background: #00d4ff; }
-      .status-dot.stopped { background: #ff4444; }
+      .status-dot::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      
+      .status-dot.connected { 
+        background: #00ff88;
+        box-shadow: 0 0 12px rgba(0, 255, 136, 0.6);
+      }
+      
+      .status-dot.connected::after {
+        background: radial-gradient(circle, rgba(0, 255, 136, 0.4) 0%, transparent 70%);
+        opacity: 1;
+        animation: pulse 2s infinite;
+      }
+      
+      .status-dot.running { 
+        background: #00d4ff;
+        box-shadow: 0 0 12px rgba(0, 212, 255, 0.6);
+      }
+      
+      .status-dot.running::after {
+        background: radial-gradient(circle, rgba(0, 212, 255, 0.4) 0%, transparent 70%);
+        opacity: 1;
+        animation: pulse 2s infinite;
+      }
+      
+      .status-dot.stopped { 
+        background: #ff4444;
+        box-shadow: 0 0 8px rgba(255, 68, 68, 0.4);
+      }
+      
+      @keyframes pulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+      }
       
       button {
         width: 100%;
-        padding: 12px;
+        padding: 14px;
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 700;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      button::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+      }
+      
+      button:hover::before {
+        width: 300px;
+        height: 300px;
+      }
+      
+      button span {
+        position: relative;
+        z-index: 1;
       }
       
       button.start {
-        background: #00ff88;
+        background: linear-gradient(135deg, #00ff88 0%, #00cc6e 100%);
         color: #000;
+        box-shadow: 0 4px 16px rgba(0, 255, 136, 0.3);
       }
       
-      button.start:hover { background: #00cc6e; }
+      button.start:hover { 
+        box-shadow: 0 6px 24px rgba(0, 255, 136, 0.5);
+        transform: translateY(-2px);
+      }
+      
+      button.start:active {
+        transform: translateY(0);
+      }
       
       button.stop {
-        background: #ff4444;
+        background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
         color: #fff;
+        box-shadow: 0 4px 16px rgba(255, 68, 68, 0.3);
       }
       
-      button.stop:hover { background: #cc0000; }
+      button.stop:hover { 
+        box-shadow: 0 6px 24px rgba(255, 68, 68, 0.5);
+        transform: translateY(-2px);
+      }
+      
+      button.stop:active {
+        transform: translateY(0);
+      }
       
       button:disabled {
-        opacity: 0.5;
+        opacity: 0.4;
         cursor: not-allowed;
+        transform: none !important;
+      }
+      
+      button:disabled:hover {
+        box-shadow: none;
       }
       
       .metric {
         display: flex;
         justify-content: space-between;
-        padding: 8px 0;
-        border-bottom: 1px solid #444;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       }
       
       .metric:last-child { border-bottom: none; }
       
       .metric-label {
-        color: #999;
+        color: #aaa;
         font-size: 13px;
+        font-weight: 500;
       }
       
       .metric-value {
-        font-size: 20px;
-        font-weight: 700;
-        color: #00d4ff;
+        font-size: 28px;
+        font-weight: 900;
+        background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
       }
       
       #fps-display {
         position: absolute;
-        top: 10px;
-        left: 10px;
-        background: rgba(0,0,0,0.7);
-        padding: 8px 12px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-family: monospace;
+        top: 30px;
+        left: 30px;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(10px);
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+        color: #00d4ff;
       }
       
       #error-display {
@@ -143,57 +299,106 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background: rgba(255, 68, 68, 0.9);
-        padding: 20px;
-        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(255, 68, 68, 0.95) 0%, rgba(200, 0, 0, 0.95) 100%);
+        backdrop-filter: blur(10px);
+        padding: 24px 32px;
+        border-radius: 12px;
         max-width: 80%;
         text-align: center;
         display: none;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(255, 68, 68, 0.5);
+        font-weight: 600;
       }
       
       #error-display.show {
         display: block;
+        animation: slideDown 0.3s ease;
+      }
+      
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -60%);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, -50%);
+        }
       }
       
       .person-item {
-        background: #222;
-        border-radius: 4px;
-        padding: 10px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 8px;
+        padding: 12px 14px;
         margin-bottom: 8px;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        transition: all 0.3s ease;
+      }
+      
+      .person-item:hover {
+        background: rgba(0, 212, 255, 0.1);
+        border-color: rgba(0, 212, 255, 0.4);
+        transform: translateX(4px);
+      }
+      
+      .person-item:last-child {
+        margin-bottom: 0;
       }
       
       .person-item .person-id {
         font-weight: 600;
         color: #00d4ff;
+        font-size: 14px;
       }
       
       .person-item .person-conf {
         color: #00ff88;
-        font-weight: 700;
+        font-weight: 800;
         font-size: 16px;
       }
       
       .log-item {
-        background: #222;
-        border-radius: 4px;
-        padding: 8px;
-        margin-bottom: 6px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 6px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
         border-left: 3px solid #00d4ff;
+        transition: all 0.3s ease;
+      }
+      
+      .log-item:hover {
+        background: rgba(0, 212, 255, 0.05);
+        transform: translateX(4px);
+      }
+      
+      .log-item:last-child {
+        margin-bottom: 0;
       }
       
       .log-time {
         color: #00d4ff;
-        font-weight: 600;
+        font-weight: 700;
         font-size: 11px;
+        letter-spacing: 0.5px;
       }
       
       .log-detail {
-        color: #999;
+        color: #aaa;
         font-size: 11px;
-        margin-top: 2px;
+        margin-top: 4px;
+        font-weight: 500;
+      }
+      
+      .empty-state {
+        color: #666;
+        font-size: 13px;
+        text-align: center;
+        padding: 20px;
+        font-style: italic;
       }
     </style>
   </head>
@@ -221,8 +426,8 @@
       
       <div class="panel-section">
         <h2>Controls</h2>
-        <button class="start" id="start-btn" onclick="startDetection()">Start Detection</button>
-        <button class="stop" id="stop-btn" onclick="stopDetection()" style="margin-top:10px" disabled>Stop Detection</button>
+        <button class="start" id="start-btn" onclick="startDetection()"><span>Start Detection</span></button>
+        <button class="stop" id="stop-btn" onclick="stopDetection()" style="margin-top:10px" disabled><span>Stop Detection</span></button>
       </div>
       
       <div class="panel-section">
@@ -240,14 +445,14 @@
       <div class="panel-section">
         <h2>Detected Persons</h2>
         <div id="persons-list" style="max-height: 300px; overflow-y: auto;">
-          <div style="color: #666; font-size: 13px; text-align: center; padding: 20px;">No detections</div>
+          <div class="empty-state">No detections</div>
         </div>
       </div>
       
       <div class="panel-section">
         <h2>Detection Logs</h2>
         <div id="logs-list" style="max-height: 200px; overflow-y: auto; font-size: 12px;">
-          <div style="color: #666; text-align: center; padding: 10px;">No logs yet</div>
+          <div class="empty-state">No logs yet</div>
         </div>
       </div>
     </div>
@@ -534,7 +739,7 @@
             });
             personsList.innerHTML = listHTML;
           } else {
-            personsList.innerHTML = '<div style="color: #666; font-size: 13px; text-align: center; padding: 20px;">No detections</div>';
+            personsList.innerHTML = '<div class="empty-state">No detections</div>';
           }
         }
       }
@@ -618,7 +823,7 @@
             startBtn.disabled = false;
             stopBtn.disabled = true;
             humanCount.textContent = '0';
-            personsList.innerHTML = '<div style="color: #666; font-size: 13px; text-align: center; padding: 20px;">No detections</div>';
+            personsList.innerHTML = '<div class="empty-state">No detections</div>';
             ctx.clearRect(0, 0, canvas.width, canvas.height);
           }
         } catch (e) {

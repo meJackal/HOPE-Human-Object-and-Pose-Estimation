@@ -3,7 +3,7 @@
 # This script should be run automatically on Raspberry Pi boot
 
 # Define paths
-PROJECT_DIR="/home/pi/Capstone"
+PROJECT_DIR="/home/julius/Documents/Humman-Detection"
 BACKEND_DIR="$PROJECT_DIR/backend"
 LOG_DIR="$PROJECT_DIR/logs"
 LOG_FILE="$LOG_DIR/startup.log"
