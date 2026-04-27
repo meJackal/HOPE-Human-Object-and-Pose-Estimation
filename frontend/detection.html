@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>YOLOv8-Pose Detection System</title>
+    <title>H.O.P.E Detection System</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       
@@ -482,10 +482,9 @@
       let lastDetectionCount = 0;
       let stableDetectionCount = 0;
       let stableCountFrames = 0;
-      let pendingFrame = null;  // Buffer for next frame to render
-      let isRendering = false;  // Prevent multiple simultaneous renders
+      let pendingFrame = null;
+      let isRendering = false;
       
-      // Get the Raspberry Pi IP from localStorage or use current host
       const piIpAddress = localStorage.getItem('piIpAddress') || window.location.hostname || 'localhost';
       const serverUrl = piIpAddress === 'localhost' || piIpAddress === window.location.hostname
         ? '' 
@@ -543,17 +542,12 @@
         }
       }
 
-      // COCO pose skeleton connections (17 keypoints)
-      // 0:nose, 1:left_eye, 2:right_eye, 3:left_ear, 4:right_ear
-      // 5:left_shoulder, 6:right_shoulder, 7:left_elbow, 8:right_elbow
-      // 9:left_wrist, 10:right_wrist, 11:left_hip, 12:right_hip
-      // 13:left_knee, 14:right_knee, 15:left_ankle, 16:right_ankle
       const skeleton = [
-        [0,1],[0,2],[1,3],[2,4],         // Head
-        [0,5],[0,6],[5,6],                // Shoulders
-        [5,7],[7,9],[6,8],[8,10],         // Arms
-        [5,11],[6,12],[11,12],            // Torso
-        [11,13],[13,15],[12,14],[14,16]   // Legs
+        [0,1],[0,2],[1,3],[2,4],         
+        [0,5],[0,6],[5,6],                
+        [5,7],[7,9],[6,8],[8,10],  
+        [5,11],[6,12],[11,12],           
+        [11,13],[13,15],[12,14],[14,16]   
       ];
 
       function resizeCanvas() {
@@ -566,10 +560,8 @@
       resizeCanvas();
 
       function drawFrame(data) {
-        // Store the frame data for rendering
         pendingFrame = data;
         
-        // Request animation frame for smooth rendering
         if (!isRendering) {
           isRendering = true;
           requestAnimationFrame(renderFrame);
@@ -586,7 +578,6 @@
         pendingFrame = null;
         
         if (data.frame) {
-          // Draw camera frame
           const img = new Image();
           img.onload = () => {
             const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
@@ -595,14 +586,12 @@
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Flip horizontally
             ctx.save();
             ctx.translate(canvas.width, 0);
             ctx.scale(-1, 1);
             ctx.drawImage(img, canvas.width - x - img.width * scale, y, img.width * scale, img.height * scale);
             ctx.restore();
             
-            // Draw pose overlays
             if (data.persons && data.persons.length > 0) {
               ctx.save();
               ctx.translate(x, y);
@@ -611,29 +600,24 @@
               for (const person of data.persons) {
                 const kps = person.keypoints;
                 
-                // Draw bounding box
                 if (person.bbox) {
                   const [x1, y1, x2, y2] = person.bbox;
                   const conf = person.bbox_conf || 1.0;
-                  // Flip bbox coordinates
                   const flippedX1 = img.width - x2;
                   const flippedX2 = img.width - x1;
                   ctx.strokeStyle = `rgba(0, 255, 136, ${conf})`;
                   ctx.lineWidth = 3 / scale;
                   ctx.strokeRect(flippedX1, y1, flippedX2 - flippedX1, y2 - y1);
                   
-                  // Draw confidence label
                   ctx.fillStyle = `rgba(0, 255, 136, ${conf})`;
                   ctx.font = `${16 / scale}px Arial`;
                   ctx.fillText(`Person ${(conf * 100).toFixed(0)}%`, flippedX1, y1 - 5 / scale);
                 }
                 
-                // Draw skeleton with flipped coordinates
                 ctx.strokeStyle = 'rgba(0, 212, 255, 0.8)';
                 ctx.lineWidth = 3 / scale;
                 ctx.beginPath();
                 for (const [a, b] of skeleton) {
-                  // Check both confidence and valid coordinates (not at origin)
                   if (kps[a] && kps[b] && 
                       kps[a][2] > 0.3 && kps[b][2] > 0.3 &&
                       kps[a][0] > 1 && kps[a][1] > 1 &&
@@ -644,9 +628,7 @@
                 }
                 ctx.stroke();
                 
-                // Draw keypoints with flipped coordinates
                 for (const kp of kps) {
-                  // Only draw keypoints with good confidence and valid coordinates
                   if (kp[2] > 0.3 && kp[0] > 1 && kp[1] > 1) {
                     ctx.fillStyle = `rgba(255, 200, 0, ${Math.min(kp[2] * 1.5, 1.0)})`;
                     ctx.beginPath();
@@ -662,7 +644,6 @@
             frameCount++;
             isRendering = false;
             
-            // If there's another pending frame, render it immediately
             if (pendingFrame) {
               requestAnimationFrame(renderFrame);
             }
@@ -675,11 +656,9 @@
         if (data.persons) {
           humanCount.textContent = data.persons.length;
           
-          // Smart logging: Only log when there's a meaningful change
           const now = Date.now();
           const currentCount = data.persons.length;
           
-          // Track stable detection count (count that persists for multiple frames)
           if (currentCount === stableDetectionCount) {
             stableCountFrames++;
           } else {
@@ -687,30 +666,22 @@
             stableCountFrames = 1;
           }
           
-          // Log when:
-          // 1. Humans first appear (0 -> N) and count is stable for 3+ frames
-          // 2. Count changes significantly (more than ±1) and stable for 5+ frames
-          // 3. 30+ seconds passed since last log (periodic update)
-          // NOTE: We don't log when count goes to 0 (no humans detected)
+
           let shouldLog = false;
           
-          // Only consider logging if there are humans detected
           if (currentCount > 0) {
             if (stableCountFrames >= 3) {
-              // Humans first detected
               if (lastDetectionCount === 0) {
                 shouldLog = true;
               }
             }
             
             if (stableCountFrames >= 5) {
-              // Significant count change (more than 1 person difference)
               if (Math.abs(currentCount - lastDetectionCount) > 1) {
                 shouldLog = true;
               }
             }
             
-            // Periodic logging every 30 seconds if people still present
             if (now - lastLogTime > 30000) {
               shouldLog = true;
             }
@@ -721,11 +692,9 @@
             lastDetectionCount = currentCount;
             logDetection(currentCount, data.persons);
           } else if (currentCount === 0 && lastDetectionCount > 0) {
-            // Update lastDetectionCount when humans disappear, but don't log
             lastDetectionCount = 0;
           }
           
-          // Update persons list
           if (data.persons.length > 0) {
             let listHTML = '';
             data.persons.forEach((person, idx) => {
@@ -781,7 +750,6 @@
             if (data.error) {
               showError(data.error);
             } else if (data.idle) {
-              // System is idle
               hideError();
             } else {
               hideError();
