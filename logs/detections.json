@@ -478,5 +478,344 @@
         "confidence": 0.852245032787323
       }
     ]
+  },
+  {
+    "timestamp": "2026-05-07T13:18:16.137620",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.594576895236969
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:18:48.421618",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.8335263729095459
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:25:19.698449",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.843529462814331
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:25:51.028931",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.8504396080970764
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:28:28.610815",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.8241991400718689
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:28:58.649361",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.8572097420692444
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:41:33.529279",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.8572097420692444
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:42:03.514991",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.5817908644676208
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:42:34.023035",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.865898847579956
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:42:57.860663",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.3965887427330017
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:43:28.180833",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.6428064107894897
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:44:03.318952",
+    "count": 3,
+    "high_confidence_count": 0,
+    "low_confidence_count": 3,
+    "detection_message": "Low chance - 3 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.7087525725364685
+      },
+      {
+        "confidence": 0.6590854525566101
+      },
+      {
+        "confidence": 0.6431952118873596
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:44:33.826868",
+    "count": 2,
+    "high_confidence_count": 0,
+    "low_confidence_count": 2,
+    "detection_message": "Low chance - 2 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.5201879143714905
+      },
+      {
+        "confidence": 0.35731643438339233
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:47:23.519239",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.8394389152526855
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:47:53.644615",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.8844040632247925
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:48:27.193231",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.8844040632247925
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:48:57.228608",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.856752872467041
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:49:05.713086",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.856752872467041
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:49:24.184827",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.8606359362602234
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:49:41.310850",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.8600044250488281
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:50:52.189188",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.707891047000885
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:53:49.975705",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.707891047000885
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:58:45.899349",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.8534760475158691
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T13:59:16.086760",
+    "count": 4,
+    "high_confidence_count": 0,
+    "low_confidence_count": 4,
+    "detection_message": "Low chance - 4 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.5957770347595215
+      },
+      {
+        "confidence": 0.5358716249465942
+      },
+      {
+        "confidence": 0.4472644627094269
+      },
+      {
+        "confidence": 0.3858952820301056
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T14:04:38.374594",
+    "count": 1,
+    "high_confidence_count": 0,
+    "low_confidence_count": 1,
+    "detection_message": "Low chance - 1 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.9187943339347839
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-05-07T14:05:08.404710",
+    "count": 4,
+    "high_confidence_count": 0,
+    "low_confidence_count": 4,
+    "detection_message": "Low chance - 4 possible human(s) in area",
+    "persons": [
+      {
+        "confidence": 0.7840181589126587
+      },
+      {
+        "confidence": 0.7824914455413818
+      },
+      {
+        "confidence": 0.7668894529342651
+      },
+      {
+        "confidence": 0.7204374670982361
+      }
+    ]
   }
 ]
