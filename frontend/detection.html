@@ -233,7 +233,7 @@
             ctx.fillText(`Person ${(conf * 100).toFixed(0)}%`, flippedX1, y1 - 5 / scale);
           }
 
-          ctx.strokeStyle = 'rgba(0, 212, 255, 0.8)';
+          ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
           ctx.lineWidth = 3 / scale;
           ctx.beginPath();
           for (const [a, b] of skeleton) {
@@ -249,7 +249,7 @@
 
           for (const kp of kps) {
             if (kp[2] > 0.3 && kp[0] > 1 && kp[1] > 1) {
-              ctx.fillStyle = `rgba(255, 200, 0, ${Math.min(kp[2] * 1.5, 1.0)})`;
+              ctx.fillStyle = `rgba(255, 0, 0, ${Math.min(kp[2] * 1.5, 1.0)})`;
               ctx.beginPath();
               ctx.arc(img.width - kp[0], kp[1], 6 / scale, 0, Math.PI * 2);
               ctx.fill();
@@ -321,7 +321,7 @@
     function connect() {
       const wsHost = piIpAddress;
       const wsPort = '8000';
-      const ws = new WebSocket(`ws://${wsHost}:${wsPort}/ws`);
+      ws = new WebSocket(`ws://${wsHost}:${wsPort}/ws`); 
       console.log('WebSocket connecting to:', `ws://${wsHost}:${wsPort}/ws`);
 
       ws.onopen = () => {
@@ -362,20 +362,42 @@
 
     async function startDetection() {
       try {
+        startBtn.disabled = true;
+        startBtn.querySelector('span').textContent = 'Starting...';  // visual feedback
+        hideError();
+
         const res = await fetch(`${serverUrl}/start`, { method: 'POST' });
-        const data = await res.json();
+        const data = await res.json();  // always read body first
+
+        if (!res.ok || data.status === 'error') {
+          const msg = data.error || `HTTP ${res.status}: ${res.statusText}`;
+          showError(`Failed to start: ${msg}`);
+          startBtn.disabled = false;
+          startBtn.querySelector('span').textContent = 'Start Detection';
+          return;
+        }
+
         if (data.is_running) {
           isRunning = true;
           runStatus.classList.add('running');
           runStatus.classList.remove('stopped');
           runText.textContent = 'Running';
-          startBtn.disabled = true;
           stopBtn.disabled = false;
+          startBtn.querySelector('span').textContent = 'Start Detection';
+          hideError();
+        } else {
+          showError('Camera failed to start. Check if camera is connected and not in use.');
+          startBtn.disabled = false;
+          startBtn.querySelector('span').textContent = 'Start Detection';
         }
       } catch (e) {
         console.error('Start failed:', e);
+        showError(`Failed to start detection: ${e.message}`);
+        startBtn.disabled = false;
+        startBtn.querySelector('span').textContent = 'Start Detection';
       }
     }
+
 
     async function stopDetection() {
       try {

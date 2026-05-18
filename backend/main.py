@@ -36,6 +36,8 @@ model: Optional[YOLO] = None
 latest_frame: Optional[bytes] = None
 latest_persons = []
 is_running = False
+camera_ready = False
+camera_error: Optional[str] = None
 lock = threading.Lock()
 camera_thread = None
 stop_event = threading.Event()
@@ -51,15 +53,21 @@ def init_model():
 
 
 def camera_loop():
-    global latest_frame, latest_persons
+    global latest_frame, latest_persons, camera_ready, camera_error
 
     logger.info("Camera thread starting...")
+    camera_ready = False
+    camera_error = None
+    
     cap = cv2.VideoCapture(0)
 
     if not cap.isOpened():
-        logger.error("Failed to open camera")
+        error_msg = "Camera device not found or in use. Check /dev/video0 and camera permissions."
+        logger.error(error_msg)
+        camera_error = error_msg
         return
 
+    camera_ready = True
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
     cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
@@ -180,13 +188,16 @@ def stop_camera_thread():
 
 @app.on_event("startup")
 async def startup_event():
-    start_camera_thread()
+    # Only pre-load the model on startup, don't start the camera thread yet.
+    # The camera thread will start fresh when the user clicks Start Detection.
+    init_model()
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    global is_running
+    global is_running, camera_ready
     is_running = False
+    camera_ready = False
     stop_camera_thread()
 
 
@@ -205,6 +216,8 @@ async def status():
     return JSONResponse({
         "status": "ok",
         "is_running": is_running,
+        "camera_ready": camera_ready,
+        "camera_error": camera_error,
         "model_loaded": model is not None,
         "camera_thread_alive": camera_thread is not None and camera_thread.is_alive(),
     })
@@ -212,17 +225,52 @@ async def status():
 
 @app.post("/start")
 async def start_detection():
-    global is_running
+    global is_running, camera_error
     is_running = True
+    camera_error = None
+    stop_camera_thread()
     start_camera_thread()
-    logger.info("Detection started")
-    return JSONResponse({"status": "started", "is_running": is_running})
+
+    # Poll until camera_ready is True, camera_error is set, or timeout
+    timeout = 5.0  # seconds
+    interval = 0.1
+    elapsed = 0.0
+
+    while elapsed < timeout:
+        await asyncio.sleep(interval)
+        elapsed += interval
+
+        if camera_error:
+            is_running = False
+            logger.error(f"Camera failed to start: {camera_error}")
+            return JSONResponse({
+                "status": "error",
+                "is_running": False,
+                "error": camera_error
+            }, status_code=400)
+
+        if camera_ready:
+            logger.info("Detection started")
+            return JSONResponse({
+                "status": "started",
+                "is_running": is_running,
+                "camera_ready": camera_ready
+            })
+
+    # Timed out — camera neither ready nor errored
+    is_running = False
+    return JSONResponse({
+        "status": "error",
+        "is_running": False,
+        "error": "Camera timed out during initialization. Check device and permissions."
+    }, status_code=408)
 
 
 @app.post("/stop")
 async def stop_detection():
     global is_running
     is_running = False
+    stop_camera_thread()
     logger.info("Detection stopped")
     return JSONResponse({"status": "stopped", "is_running": is_running})
 
@@ -296,6 +344,16 @@ async def websocket_pose(ws: WebSocket):
                 with lock:
                     persons_copy = latest_persons.copy()
                     frame_copy = latest_frame
+
+                if frame_copy is None:
+                    await ws.send_text(json.dumps({
+                        "idle": True,
+                        "is_running": is_running,
+                        "starting": True,
+                        "camera_ready": camera_ready,
+                    }))
+                    await asyncio.sleep(0.1)
+                    continue
 
                 detection_message = ""
                 if persons_copy:
