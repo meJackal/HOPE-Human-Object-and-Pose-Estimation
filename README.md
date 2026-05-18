@@ -4,7 +4,7 @@ H.O.P.E is a compact, embedded-style human pose detection system built to run he
 
 ## Features
 
-- Real-time pose detection using YOLOv8n-pose model
+- Real-time pose detection using YOLOv8-pose model
 - Initialization page with system status checks before detection
 - Web UI with split layout:
    - Left: Live camera feed with pose overlay
